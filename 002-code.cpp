@@ -1,0 +1,393 @@
+#include "splashkit.h"
+#include "terminal_user_input.h" // from task 4.3C
+#include <vector>
+
+using std::vector;
+using namespace std;
+
+// an enumeration that holds values for different levels of swords which a knight can have
+enum sword_type
+{
+    STRONG = 1,
+    MEDIUM,
+    WEAK
+};
+
+// an entity called "knight_data" that holds some fields linked to it
+// it will be used to declare knights
+struct knight_data
+{
+    string name;
+    int age;
+    int month;
+    sword_type sword;
+    vector<string> tools;
+};
+
+// an entity called "kingdom_data" that holds some fields linked to it
+// it will be used to define a kingdom
+struct kingdom_data
+{
+    string name;
+    vector<knight_data> knights;
+};
+
+// an enumeration that holds values associated with update function that will be used to update the knight's data based on user selection
+enum knight_update_option
+{
+    UPDATE_NAME,
+    UPDATE_AGE,
+    UPDATE_MONTH_OF_BIRTH,
+    UPDATE_SWORD_TYPE,
+    ADD_TOOL,
+    DELETE_TOOL,
+    FINISH_UPDATE
+};
+
+// an enumeration that holds values associated with update function that will be used to update the kkingdom data based on user selection
+enum kingdom_update_option
+{
+    ADD_KNIGHT,
+    QUERY_KNIGHT,
+    UPDATE_KNIGHT,
+    DELETE_KNIGHT,
+    DISPLAY_KINGDOM,
+    FINISH_UPDATES
+};
+
+// a procedure to display swords for user to choose from
+void select_sword()
+{
+    write_line("");
+    write_line("Select a sword for your knight");
+    write_line("1. Strong sword - power 1000");
+    write_line("2. Medium sword - power 750");
+    write_line("3. Weak sword   - power 400");
+}
+
+// a procedure that is used to delete tools from the tools vector in knight data struct
+void delete_tool(knight_data &my_knight)
+{
+    if (my_knight.tools.size() != 0)
+    {
+        write_line("");
+        write_line("name   ----   idx");
+        bool more_tool = true;
+        do
+        {
+            for (int i = 0; i < my_knight.tools.size(); i++)
+            {
+                write_line(my_knight.tools[i] + "  ----  " + to_string(i));
+            }
+            if (my_knight.tools.size() != 0)
+            {
+                int index = read_integer("Select a tool : ", 0, my_knight.tools.size() - 1);
+                int last_idx;
+                last_idx = my_knight.tools.size() - 1;
+                my_knight.tools[index] = my_knight.tools[last_idx];
+                my_knight.tools.pop_back();
+                write_line(" DONE: Tool deleted !");
+                more_tool = read_bool("delete more tools (y/n) ? ");
+            }
+            else
+            {
+                write_line("No tools for this knight");
+                break; // break the loop when all the tools are deleted
+            }
+        } while (more_tool);
+    }
+    else
+    {
+        write_line("No tools for this knight");
+    }
+}
+
+// a function to get user choice while selecting what to update for a knight
+knight_update_option get_choice()
+{
+    int result = read_integer("select option: ");
+    return static_cast<knight_update_option>(result - 1); // return the corresponding value from the enumeration
+}
+
+// a procedure that is used to add tools to the tools vectors in knight data struct
+void add_tool(knight_data &my_knight)
+{
+    string tool;
+    bool more_tool = false;
+    do
+    {
+        tool = to_uppercase(read_string("Add Tool: "));
+        my_knight.tools.push_back(tool);
+        more_tool = read_bool("add more tools (y/n) ? ");
+    } while (more_tool);
+}
+
+// a procdure that display all the field values linked with knight
+void write_knight(const knight_data &my_knight)
+{
+    write_line("");
+    write_line("knight data :");
+    write_line(my_knight.name + " ( aged: " + to_string(my_knight.age) + " ) ");
+    write_line("Birth Month: " + to_string(my_knight.month) + " | Sword level: " + to_string(my_knight.sword));
+    write("tools: ");
+    if (my_knight.tools.size() != 0)
+    {
+        for (int i = 0; i < my_knight.tools.size(); i++)
+        {
+            write(my_knight.tools[i] + " | ");
+        }
+    }
+    else
+    {
+        write_line("No tools for this knight");
+    }
+    write_line(" ");
+}
+
+// a function that read knight data from the user inputs and returns the knight itself
+knight_data read_knight()
+{
+    knight_data result;
+    result.name = read_string("Enter knight name: ");
+    result.age = read_integer("Enter knight age: ");
+    result.month = read_integer("Enter month of birth: ", 1, 12);
+    select_sword();
+    result.sword = static_cast<sword_type>(read_integer("select sword: ", 1, 3));
+    add_tool(result);
+    return result;
+}
+
+// a procdure that contains update options, user can select one of these options
+void knight_main_menu()
+{
+    write_line("--------- Knight Update Menu -----------------");
+    write_line("1. Update name");
+    write_line("2. Update age ");
+    write_line("3. Update birth month ");
+    write_line("4. Update sword type ");
+    write_line("5. Add Tool ");
+    write_line("6. Delete Tool ");
+    write_line("7. Finish update ");
+    write_line("");
+}
+
+// a procedure that updates the fields linked with the knight based on the user's choice
+// pass-by-referance so that the knight which user pass as an argument should be updated in the "int main" itself
+void update_kight(knight_data &my_knight)
+{
+    write_line("");
+    write_line("Update knight");
+    write_knight(my_knight); // write current state of knight
+
+    knight_update_option option; // options from knight_update_options enumeration
+
+    // a loop that continously shows updation menu until user select to finish updates
+    // also updates the corresponding fields of knight based on user choice
+    do
+    {
+        knight_main_menu(); // display updation menu
+        option = get_choice();
+
+        switch (option)
+        {
+        case UPDATE_NAME:
+            my_knight.name = read_string("Enter new name: ");
+            break;
+
+        case UPDATE_AGE:
+            my_knight.age = read_integer("Enter new age: ");
+            break;
+
+        case UPDATE_MONTH_OF_BIRTH:
+            my_knight.month = read_integer("Enter new month of birth: ", 1, 12);
+            break;
+
+        case UPDATE_SWORD_TYPE:
+            select_sword();
+            my_knight.sword = static_cast<sword_type>(read_integer("select sword: ", 1, 3) - 1);
+            break;
+        case ADD_TOOL:
+            add_tool(my_knight);
+            break;
+        case DELETE_TOOL:
+            delete_tool(my_knight);
+            break;
+        case FINISH_UPDATE:
+            write_knight(my_knight);
+            break;
+        default:
+            write_line("valid input please");
+            break;
+        }
+
+    } while (option != FINISH_UPDATE);
+
+    write_line(" ");
+}
+
+// a procedure that displays all the details about all the knights in the kingdom
+void write_kingdom(const kingdom_data &kingdom)
+{
+    write_line("--------- Welcome to " + kingdom.name + " -----------------");
+    if (kingdom.knights.size() == 0)
+    {
+        write_line("");
+        write_line("ALERT: No Knights in this kingdom (add by using update menu!)");
+        write_line("");
+    }
+    for (int i = 0; i < kingdom.knights.size(); i++)
+    {
+        write_knight(kingdom.knights[i]);
+    }
+}
+
+//  delete the knight from the kingdom at a specific index
+void delete_knight(kingdom_data &kingdom, int index)
+{
+    if (index >= 0 and index < kingdom.knights.size())
+    {
+        int last_idx;
+        last_idx = kingdom.knights.size() - 1;
+        kingdom.knights[index] = kingdom.knights[last_idx];
+        kingdom.knights.pop_back();
+    }
+}
+
+//  a function that displays names and indeces of the knights and allows users to select a knight
+int select_knight(const kingdom_data &kingdom)
+{
+
+    if (kingdom.knights.size() == 0)
+    {
+        write_line("");
+        write_line("ALERT: No Knights in this kingdom (add by using update menu!)");
+        write_line("");
+    }
+    else
+    {
+        write_line("");
+        write_line("name   ----   idx");
+
+        for (int i = 0; i < kingdom.knights.size(); i++)
+        {
+            write_line(kingdom.knights[i].name + "  ----  " + to_string(i+1));
+        }
+
+        write_line("");
+        int option = read_integer("Select a knight : ", 1, kingdom.knights.size());
+        return option - 1;
+    }
+    return -1;
+}
+
+// it just ask user to select a knight index and shows its details respectively
+void query_knight(const kingdom_data &kingdom)
+{
+    int select = select_knight(kingdom);
+    if (select != -1)
+    {
+        write_knight(kingdom.knights[select]);
+    }
+}
+
+// a procedure that allows the users to add knigths to the kingdom
+void add_knight(kingdom_data &kingdom)
+{
+    knight_data new_knight;
+    new_knight = read_knight();
+
+    kingdom.knights.push_back(new_knight);
+    write_line("DONE: Knight added to " + kingdom.name + "...");
+}
+
+// a procdure that contains update options, user can select one of these options
+void kingdom_main_menu()
+{
+    write_line("Kingdom Menu :");
+    write_line("1. Add a knight");
+    write_line("2. Query a Knight ");
+    write_line("3. Update a Knight ");
+    write_line("4. Delete a Knight ");
+    write_line("5. Display Kingdom details ");
+    write_line("6. Finish update ");
+}
+
+// a procedure that updates the fields linked with the kingdom based on the user's choice
+// pass-by-referance so that the kingdom which user pass as an argument should be updated in the "int main" itself
+void update_kingdom(kingdom_data &kingdom)
+{
+    int sel_idx;
+    write_line("");
+    write_line("Update Kingdom");
+
+    kingdom_update_option option; // options from kingdom_update_options enumeration
+
+    // a loop that continously shows updation menu until user select to finish updates
+    // also updates the corresponding fields of knight based on user choice
+    do
+    {
+        write_line("");
+        kingdom_main_menu(); // display updation menu
+        option = static_cast<kingdom_update_option>(read_integer("select option: ", 1, 6) - 1);
+
+        switch (option)
+        {
+        case ADD_KNIGHT:
+            add_knight(kingdom);
+            break;
+
+        case QUERY_KNIGHT:
+            query_knight(kingdom);
+            break;
+
+        case UPDATE_KNIGHT:
+            sel_idx = select_knight(kingdom);
+            if (sel_idx != -1)
+            {
+                update_kight(kingdom.knights[sel_idx]);
+            }
+            break;
+
+        case DELETE_KNIGHT:
+            sel_idx = select_knight(kingdom);
+            if (sel_idx != -1)
+            {
+                delete_knight(kingdom, sel_idx);
+            }
+            break;
+        case DISPLAY_KINGDOM:
+            write_line("");
+            write_kingdom(kingdom);
+            break;
+
+        case FINISH_UPDATES:
+            break;
+
+        default:
+            write_line("valid input please");
+            break;
+        }
+    } while (option != FINISH_UPDATES);
+}
+
+// reads the kingdom data
+kingdom_data read_kingdom()
+{
+    kingdom_data result;
+    result.name = read_string("Knigdom Name : ");
+    write_line("");
+    write_kingdom(result);
+    write_line("DONE: Kingdom initialized ...");
+    return result;
+}
+
+int main()
+{
+    kingdom_data my_kingdom = read_kingdom(); // read the kingdom data
+    bool update_the_kingdom = read_bool("Want to update kingdom: ");
+    if (update_the_kingdom)
+    {
+        update_kingdom(my_kingdom); // controls the whole kingdom
+    }
+    return 0;
+}
